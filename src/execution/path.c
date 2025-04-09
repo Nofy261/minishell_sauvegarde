@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   path.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/26 08:33:29 by nolecler          #+#    #+#             */
-/*   Updated: 2025/03/18 12:54:43 by rraumain         ###   ########.fr       */
+/*   Updated: 2025/04/08 15:11:01 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,5 +45,10 @@ char	*get_command_path(char *cmd, t_envp *envp)
 		return (NULL);
 	found = search_in_paths(paths, cmd);
 	free_split(paths);
+	if (!found)
+	{
+		if (access(cmd, F_OK) == 0)
+			found = cmd;
+	}
 	return (found);
 }

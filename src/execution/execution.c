@@ -6,72 +6,38 @@
 /*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/21 10:24:39 by rraumain          #+#    #+#             */
-/*   Updated: 2025/03/21 14:53:36 by nolecler         ###   ########.fr       */
+/*   Updated: 2025/04/09 11:14:18 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-static void	close_and_wait(t_pid_data *pdata)
-{
-	int	i;
-	int	status;
-
-	i = 0;
-	while (i < pdata->nb_cmd - 1)
-	{
-		close(pdata->pipefd[i][0]);
-		close(pdata->pipefd[i][1]);
-		i++;
-	}
-	i = 0;
-	while (i < pdata->nb_cmd && !g_sig)
-	{
-		waitpid(pdata->pids[i], &status, 0);
-		i++;
-	}
-}
-
+//test decoupage
 static void	execute_child(t_cmd *cmd, int index, t_pid_data *pdata, t_cmd *head)
 {
-	int		i;
-	char	*path;
 	char 	**env;
+	char	*path;
 
-	dup_fd(pdata, index);
-	i = 0;
-	while (i < pdata->nb_cmd - 1)
-	{
-		close(pdata->pipefd[i][0]);
-		close(pdata->pipefd[i][1]);
-		i++;
-	}
+	pdata->gdata->status = 0;
+	dup_and_close(pdata, index, cmd);
+	if (!cmd->argv)
+		exit_clean_child(pdata, head, NULL, NULL, 0);
 	if (!apply_redirections(cmd, index))
-		exit(EXIT_FAILURE);
+		exit_clean_child(pdata, head, NULL, NULL, EXIT_FAILURE);
 	if (is_builtin_child(cmd) == 1)
 	{
-		exec_builtin_child(cmd, pdata, pdata->gdata);
-		free(pdata->pids);
-		cleanup_pipes(pdata->pipefd, pdata->nb_cmd - 1);
-		clear_env(pdata->gdata->envp);
-		free(pdata->gdata);
-		free(pdata);
-		free_cmd_list(head);
+		exec_builtin_child_and_free(cmd, pdata, head);
 		exit(0); // should be status exit code
 	}
 	env = convert_env(pdata->gdata->envp);
 	path = get_command_path(cmd->argv[0], pdata->gdata->envp);
 	if (!path)
-	{
-		clear_env_array(env);
-		perror(cmd->argv[0]);
-		exit(127);
-	}
+		path_error(cmd, head, pdata, env);
 	execve(path, cmd->argv, env);
 	clear_env_array(env);
 	free(path);
-	perror(cmd->argv[0]);
-	exit(EXIT_FAILURE);
+	ft_putstr_fd(cmd->argv[0], 2);
+	exit(EXIT_FAILURE);	
 }
 
 static int	fork_and_exec_child(t_cmd *cmd, int i, t_pid_data *pdata, t_cmd *head)
@@ -79,12 +45,14 @@ static int	fork_and_exec_child(t_cmd *cmd, int i, t_pid_data *pdata, t_cmd *head
 	pid_t	pid;
 
 	if (cmd->redir && (cmd->redir->type == REDIR_HEREDOC
-			|| cmd->redir->type == REDIR_HEREDOC_Q)
-		&& !set_heredoc(cmd->redir, pdata->gdata) && !g_sig)
+		|| cmd->redir->type == REDIR_HEREDOC_Q)
+	&& !set_heredoc(cmd->redir, pdata->gdata))
 	{
 		perror("heredoc");
 		return (0);
 	}
+	if (g_sig && ft_strncmp(cmd->argv[0], "echo", 5) != 0)
+		return (0);
 	pid = fork();
 	if (pid < 0)
 	{
@@ -109,17 +77,31 @@ static void	process_cmds(t_cmd *cmd, t_pid_data *pdata, t_global_data *data)
 		return ;
 	ft_bzero(pdata->pids, sizeof(pid_t) * pdata->nb_cmd);
 	i = 0;
-	while (cmd && !g_sig)
+	while (cmd)
 	{
+		// if (!cmd->argv || !cmd->argv[0] || cmd->argv[0][0] == '\0')
+		// {
+		// 	data->status = 0;
+		// 	cmd = cmd->next;
+		// 	continue ;
+		// }
 		if (is_builtin_parent(cmd) == 1)
-			exec_builtin_parent(cmd, pdata, data);
+		{
+			if (!has_child_process(head))
+			{
+				exec_builtin_parent(cmd, pdata, data, head);
+				clean_heredocs(head);
+				free(pdata->pids);
+				return ;
+			}
+		}
 		else if (!fork_and_exec_child(cmd, i, pdata, head))
 			break ;
 		i++;
 		cmd = cmd->next;
 	}
 	close_and_wait(pdata);
-	clean_heredocs(head, i);
+	clean_heredocs(head);
 	free(pdata->pids);
 }
 
@@ -147,3 +129,4 @@ void	execute_cmds(t_cmd *cmd, t_global_data *data)
 	cleanup_pipes(pdata->pipefd, pdata->nb_cmd - 1);
 	free(pdata);
 }
+

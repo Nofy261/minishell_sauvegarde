@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parser.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/18 14:57:43 by rraumain          #+#    #+#             */
-/*   Updated: 2025/03/12 10:12:24 by rraumain         ###   ########.fr       */
+/*   Created: 2025/04/03 09:46:09 by nolecler          #+#    #+#             */
+/*   Updated: 2025/04/04 09:56:10 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,6 +75,8 @@ static int	apply_type(t_cmd *cmd, t_token **current, int *index)
 	type = (*current)->type;
 	if (type == TK_WORD)
 	{
+		if ((*current)->value[0] == '\0')
+			return (1);
 		if (!add_argv(cmd, (*current)->value))
 			return (0);
 	}
@@ -97,7 +99,7 @@ static t_cmd	*parse_command(t_token **current, int index)
 
 	cmd = create_cmd(index);
 	if (!cmd)
-	return (NULL);
+		return (NULL);
 	i = -1;
 	while (*current && (*current)->type != TK_PIPE
 		&& (*current)->type != TK_EOF)
@@ -112,13 +114,36 @@ static t_cmd	*parse_command(t_token **current, int index)
 	return (cmd);
 }
 
+static int	handle_command_node(t_token **current, t_cmd **head, t_cmd **tail,
+		int *i)
+{
+	t_cmd	*cmd;
+
+	cmd = parse_command(current, *i);
+	if (!cmd)
+	{
+		free_cmd_list(*head);
+		return (0);
+	}
+	if (!*head)
+		*head = cmd;
+	else
+		(*tail)->next = cmd;
+	*tail = cmd;
+	if (*current && (*current)->type == TK_PIPE)
+	{
+		*current = (*current)->next;
+		(*i)++;
+	}
+	return (1);
+}
+
 t_cmd	*parse_line(t_token *tokens)
 {
+	int		i;
 	t_cmd	*head;
 	t_cmd	*tail;
 	t_token	*current;
-	t_cmd	*cmd;
-	int		i;
 
 	head = NULL;
 	tail = NULL;
@@ -126,22 +151,8 @@ t_cmd	*parse_line(t_token *tokens)
 	i = 0;
 	while (current && current->type != TK_EOF)
 	{
-		cmd = parse_command(&current, i);
-		if (!cmd)
-		{
-			free_cmd_list(head);
+		if (!handle_command_node(&current, &head, &tail, &i))
 			return (NULL);
-		}
-		if (!head)
-			head = cmd;
-		else
-			tail->next = cmd;
-		tail = cmd;
-		if (current && current->type == TK_PIPE)
-		{
-			current = current->next;
-			i++;
-		}
 	}
 	return (head);
 }

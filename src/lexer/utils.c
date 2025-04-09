@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/15 20:38:20 by rraumain          #+#    #+#             */
-/*   Updated: 2025/03/12 10:12:43 by rraumain         ###   ########.fr       */
+/*   Updated: 2025/04/03 17:13:33 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ static char	*read_quoted(const char *input, int *index, char quote)
 }
 
 static char	*add_quoted_chunk(const char *input, int *index,
-	t_global_data *data, char *word)
+		t_global_data *data, char *word)
 {
 	char	quote;
 	char	*substring;
@@ -57,18 +57,40 @@ static char	*add_quoted_chunk(const char *input, int *index,
 }
 
 static char	*add_unquoted_chunk(const char *input, int *index,
-	t_global_data *data, char *word)
+		t_global_data *data, char *word)
 {
 	int		start;
 	char	*substring;
 	char	*chunk;
+	int		varlen;
+	char	*var;
 
 	start = *index;
 	while (input[*index] && !is_whitespace(input[*index])
-		&& input[*index] != '\'' && input[*index] != '"'
-		&& input[*index] != '|' && input[*index] != '<'
-		&& input[*index] != '>')
+		&& input[*index] != '\'' && input[*index] != '"' && input[*index] != '|'
+		&& input[*index] != '<' && input[*index] != '>')
+	{
+		if (input[*index] == '$' && input[*index + 1]
+			&& !is_whitespace(input[*index + 1]))
+		{
+			varlen = *index;
+			varlen++;
+			while ((ft_isalpha(input[varlen]) || input[varlen] == '_'
+					|| input[varlen] == '-' || input[varlen] == '?')
+				&& !is_whitespace(input[varlen]))
+				varlen++;
+			var = ft_substr(input, start, varlen - start);
+			if (var)
+			{
+				expand_word(&var, data);
+				free(word);
+				word = var;
+				*index = varlen;
+				return (word);
+			}
+		}
 		*index = *index + 1;
+	}
 	substring = ft_substr(input, start, *index - start);
 	if (!substring)
 	{
@@ -83,7 +105,7 @@ static char	*add_unquoted_chunk(const char *input, int *index,
 }
 
 char	*read_word_and_expand(const char *input, int *index,
-	t_global_data *data)
+		t_global_data *data)
 {
 	char	*word;
 	char	*tmp;
