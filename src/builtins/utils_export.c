@@ -6,7 +6,7 @@
 /*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/03/31 17:33:00 by nolecler          #+#    #+#             */
-/*   Updated: 2025/04/08 15:50:33 by nolecler         ###   ########.fr       */
+/*   Updated: 2025/04/15 09:54:56 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,24 +46,60 @@ void	ft_sort_params(t_envp *env)
 	}
 }
 
-int	is_var_valid(char *str)
+// ajout
+// Cas classique sans '+='
+static int	is_classic_var_invalid(char *str)
 {
 	int	i;
 
 	i = 0;
 	if (str[i] == '=' || (str[i] >= '0' && str[i] <= '9'))
 		return (1);
-	else
+	while (str[i] && str[i] != '=')
 	{
-		while (str[i] && str[i] != '=')
-		{
-			if (!(ft_isalnum(str[i]) || str[i] == '_'))
-				return (1);
-			i++;
-		}
+		if (!(ft_isalnum(str[i]) || str[i] == '_'))
+			return (1);
+		i++;
 	}
 	return (0);
 }
+
+//ajout
+static int is_plus_equal_var_invalid(char *str, char *plus_equal)
+{
+    int i;
+    int len;
+	
+	i = 0;
+    len = plus_equal - str; // Longueur du nom avant le '+'
+
+    if (len == 0 || (str[0] >= '0' && str[0] <= '9'))
+        return (1); // Invalide : vide ou commence par chiffre
+    while (i < len)
+    {
+        if (!(ft_isalnum(str[i]) || str[i] == '_'))
+            return (1); // caractère non autorisé
+        i++;
+    }
+    return (0);
+}
+
+// modifié
+int is_var_valid(char *str)
+{
+    int     result;
+    char   *plus_equal;
+
+    plus_equal = ft_strnstr(str, "+=", ft_strlen(str));
+    if (plus_equal)
+    {
+        result = is_plus_equal_var_invalid(str, plus_equal);
+        return (result);
+    }
+    result = is_classic_var_invalid(str);
+    return (result);
+}
+
 
 int	is_var_exist(char *argv, t_global_data *data)
 {
@@ -81,7 +117,8 @@ int	is_var_exist(char *argv, t_global_data *data)
 		len = ft_strlen(argv);
 	while (tmp)
 	{
-		if (ft_strncmp(argv, tmp->name, len) == 0 && ft_strlen(tmp->name) == len)
+		if (ft_strncmp(argv, tmp->name, len) == 0
+			&& ft_strlen(tmp->name) == len)
 			return (0);
 		tmp = tmp->next;
 	}

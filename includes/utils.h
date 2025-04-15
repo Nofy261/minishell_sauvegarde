@@ -3,17 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   utils.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/26 08:32:33 by nolecler          #+#    #+#             */
-/*   Updated: 2025/03/31 17:45:36 by nolecler         ###   ########.fr       */
+/*   Updated: 2025/04/12 14:51:30 by rraumain         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-
-
-#ifndef STRING_H
-# define STRING_H
+#ifndef UTILS_H
+# define UTILS_H
 
 # include "minishell.h"
 
@@ -34,5 +32,6 @@ t_envp	*search_var(t_envp *envp, char *str);
 t_envp	*init_var(char *envp, int pos);
 t_envp	*init_env(char **envp);
 char	**convert_env(t_envp *envp);
+void	set_minishlvl(t_envp *envp);
 
 #endif
