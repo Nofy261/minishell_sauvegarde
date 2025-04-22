@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   execution.h                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
+/*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/21 10:48:53 by rraumain          #+#    #+#             */
-/*   Updated: 2025/04/11 11:19:35 by nolecler         ###   ########.fr       */
+/*   Updated: 2025/04/16 17:25:28 by rraumain         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,8 +21,6 @@ void	execute_cmds(t_cmd *cmd, t_global_data *data);
 // EXEC_UTILS1.c
 void	close_and_wait(t_pid_data *pdata);
 int		is_directory(const char *path);
-// void	exit_clean_child(t_pid_data *pdata, t_cmd *head, char **env, char *path,
-//			int status);
 void	exit_clean_child(t_pid_data *pdata, t_cmd *head, int status);
 void	dup_and_close(t_pid_data *pdata, int index, t_cmd *cmd);
 void	exec_builtin_child_and_free(t_cmd *cmd, t_pid_data *pdata, t_cmd *head);
@@ -55,5 +53,8 @@ void	dup_fd(t_pid_data *pdata, int index, t_cmd *cmd);
 int		set_heredoc(t_redir *redir, t_global_data *data);
 void	clean_heredocs(t_cmd *cmd);
 char	*create_heredoc_filename(int cmd_i, int redir_i);
+
+//	HEREDOC_UTILS
+void	putendl_fd_heredoc(char *input, int fd, t_global_data *data);
 
 #endif

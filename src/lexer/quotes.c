@@ -6,7 +6,7 @@
 /*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/12 13:45:50 by rraumain          #+#    #+#             */
-/*   Updated: 2025/04/15 09:50:30 by nolecler         ###   ########.fr       */
+/*   Updated: 2025/04/15 11:45:31 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ char	*process_quoted_word(const char *input, int *index)
 	char	*tmp;
 	char	*result;
 
-	result = NULL; // ajout 15 avril
+	result = NULL;
 	quote = input[*index];
 	(*index)++;
 	tmp = read_quoted(input, index, quote);

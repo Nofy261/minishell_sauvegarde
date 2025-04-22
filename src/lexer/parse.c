@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   parse.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/16 23:40:41 by rraumain          #+#    #+#             */
-/*   Updated: 2025/04/12 12:02:16 by rraumain         ###   ########.fr       */
+/*   Updated: 2025/04/18 17:40:39 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,20 +25,84 @@ int	parse_redirect(t_token **head, int *index, char *input)
 	return (1);
 }
 
-int	parse_word(t_token **head, int *index, char *input)
+static int	is_quotes(char c)
 {
-	t_token	*new_token;
+	if (c == '\01'
+		|| c == '\02'
+		|| c == '\03'
+		|| c == '\04'
+	)
+		return (1);
+	return (0);
+}
+
+static void	clean_quotes(char **word)
+{
+	size_t	i;
+	char	*res;
+
+	res = NULL;
+	i = 0;
+	while ((*word)[i])
+	{
+		if (!is_quotes((*word)[i]))
+			copy_char(&res, (*word)[i]);
+		i++;
+	}
+	free(*word);
+	*word = res;
+}
+
+static t_token	*create_token_heredoc(char *word)
+{
+	int		i;
+	char	*varname;
+	t_token	*token;
+
+	i = 0;
+	if (!word)
+		return (NULL);
+	while (word[i] && is_quotes(word[i]))
+		i++;
+	if (word[i] == '$')
+	{
+		varname = get_varname(word, &i);
+		free(word);
+		if (!varname)
+			return (NULL);
+		token = create_token(TK_WORD, ft_strjoin("$", varname));
+		free(varname);
+		return (token);
+	}
+	clean_quotes(&word);
+	token = create_token(TK_WORD, word);
+	return (token);
+}
+
+int	parse_word(t_token **head, char *input, int *index, t_global_data *data)
+{
 	char	*word;
+	char	*expanded;
+	t_token	*new_tkn;
 
 	word = read_word(input, index);
 	if (!word)
 		return (0);
-	new_token = create_token(TK_WORD, word);
-	if (!new_token)
+	if (tokenlast(*head) && (tokenlast(*head)->type == TK_HEREDOC
+			|| tokenlast(*head)->type == TK_HEREDOC_QUOTES))
+		new_tkn = create_token_heredoc(word);
+	else
 	{
+		expanded = expand_line(word, data);
 		free(word);
+		new_tkn = create_token(TK_WORD, expanded);
+	}
+	if (!new_tkn)
+	{
+		if (expanded)
+			free(expanded);
 		return (0);
 	}
-	add_token(head, new_token);
+	add_token(head, new_tkn);
 	return (1);
 }

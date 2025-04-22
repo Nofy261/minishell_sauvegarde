@@ -6,7 +6,7 @@
 /*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/15 20:38:20 by rraumain          #+#    #+#             */
-/*   Updated: 2025/04/12 14:21:45 by rraumain         ###   ########.fr       */
+/*   Updated: 2025/04/21 14:00:56 by rraumain         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,28 +41,50 @@ char	*read_word(const char *input, int *index)
 	return (str);
 }
 
+static t_token_type	parse_heredoc(const char *input, int *index)
+{
+	int	tmp;
+	int	start;
+
+	*index += 2;
+	tmp = *index;
+	while (is_whitespace(input[tmp]))
+		tmp++;
+	start = tmp;
+	if (input[tmp] == '"' || input[tmp] == '\'')
+	{
+		*index = start;
+		return (TK_HEREDOC_QUOTES);
+	}
+	while (input[tmp] && !is_whitespace(input[tmp])
+		&& input[tmp] != '"' && input[tmp] != '\'')
+		tmp++;
+	if (input[tmp] == '"' || input[tmp] == '\'')
+	{
+		*index = start;
+		return (TK_HEREDOC_QUOTES);
+	}
+	*index = start;
+	return (TK_HEREDOC);
+}
+
 t_token_type	check_redir(const char *input, int *index)
 {
+	if (input[*index] == '<' && input[*index + 1] == '<')
+		return (parse_heredoc(input, index));
 	if (input[*index] == '<')
 	{
-		if (input[*index + 1] == '<')
-		{
-			*index += 2;
-			if (input[*index + 1] == '\"' || input[*index + 1] == '\'')
-				return (TK_HEREDOC_QUOTES);
-			return (TK_HEREDOC);
-		}
-		*index += 1;
+		(*index)++;
 		return (TK_REDIR_IN);
+	}
+	if (input[*index] == '>' && input[*index + 1] == '>')
+	{
+		*index += 2;
+		return (TK_REDIR_APPEND);
 	}
 	if (input[*index] == '>')
 	{
-		if (input[*index + 1] == '>')
-		{
-			*index += 2;
-			return (TK_REDIR_APPEND);
-		}
-		*index += 1;
+		(*index)++;
 		return (TK_REDIR_OUT);
 	}
 	return (TK_EOF);

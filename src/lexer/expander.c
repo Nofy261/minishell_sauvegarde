@@ -6,7 +6,7 @@
 /*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/02/23 13:43:49 by rraumain          #+#    #+#             */
-/*   Updated: 2025/04/12 14:50:45 by rraumain         ###   ########.fr       */
+/*   Updated: 2025/04/16 15:20:26 by rraumain         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -69,7 +69,10 @@ static int	process_unquoted_block(const char *line, int i, char **expanded,
 {
 	if (line[i] == '$' && (ft_isalpha(line[i + 1]) || line[i + 1] == '_'
 			|| line[i + 1] == '?'))
+	{
 		handle_var(expanded, (char *)line, &i, data);
+		trim_whitespace(expanded);
+	}
 	else
 	{
 		copy_char(expanded, line[i]);

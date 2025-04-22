@@ -6,7 +6,7 @@
 /*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/10 14:46:32 by nolecler          #+#    #+#             */
-/*   Updated: 2025/04/12 14:13:13 by rraumain         ###   ########.fr       */
+/*   Updated: 2025/04/16 15:49:53 by rraumain         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,4 +63,37 @@ void	copy_char(char **buffer, char c)
 	new_buf[len + 1] = '\0';
 	free(*buffer);
 	*buffer = new_buf;
+}
+
+t_token	*tokenlast(t_token *token)
+{
+	while (token && token->next)
+		token = token->next;
+	return (token);
+}
+
+void	trim_whitespace(char **str)
+{
+	char	*res;
+	size_t	i;
+	int		is_first;
+
+	res = NULL;
+	i = 0;
+	is_first = 1;
+	while ((*str)[i])
+	{
+		if (!is_whitespace((*str)[i])
+			|| (!is_first && is_whitespace((*str)[i])
+			&& !is_whitespace((*str)[i + 1])))
+		{
+			copy_char(&res, (*str)[i]);
+			is_first = 0;
+		}
+		i++;
+	}
+	if (!res)
+		return ;
+	free(*str);
+	*str = res;
 }

@@ -1,18 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   signals.c                                          :+:      :+:    :+:   */
+/*   signal_handler.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: rraumain <rraumain@student.42.fr>          +#+  +:+       +#+        */
+/*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/02/28 16:12:25 by rraumain          #+#    #+#             */
-/*   Updated: 2025/04/12 14:54:41 by rraumain         ###   ########.fr       */
+/*   Created: 2025/04/16 15:38:01 by rraumain          #+#    #+#             */
+/*   Updated: 2025/04/18 16:36:58 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "minishell.h"
+#include <minishell.h>
 
-static void	handle_sigint(int sig)
+void	handle_sigint_no_redisplay(int sig)
+{
+	g_sig = sig;
+	write(STDOUT_FILENO, "\n", 1);
+}
+
+void	handle_sigint(int sig)
 {
 	g_sig = sig;
 	write(STDOUT_FILENO, "\n", 1);
@@ -21,7 +27,7 @@ static void	handle_sigint(int sig)
 	rl_redisplay();
 }
 
-static void	handle_sigint_heredoc(int sig)
+void	handle_sigint_heredoc(int sig)
 {
 	(void)sig;
 	g_sig = -29;
@@ -30,20 +36,11 @@ static void	handle_sigint_heredoc(int sig)
 	ioctl(0, TIOCSTI, "\n");
 }
 
-void	set_parent_signals(void)
+void	handle_signal(t_global_data *data)
 {
-	signal(SIGINT, handle_sigint);
-	signal(SIGQUIT, SIG_IGN);
-}
-
-void	set_child_signals(void)
-{
-	signal(SIGINT, SIG_DFL);
-	signal(SIGQUIT, SIG_DFL);
-	signal(SIGPIPE, SIG_IGN);
-}
-
-void	set_heredoc_signals(void)
-{
-	signal(SIGINT, handle_sigint_heredoc);
+	if (g_sig)
+	{
+		data->status = 130;
+		g_sig = 0;
+	}
 }

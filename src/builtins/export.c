@@ -6,36 +6,13 @@
 /*   By: nolecler <nolecler@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/03 09:45:55 by nolecler          #+#    #+#             */
-/*   Updated: 2025/04/15 10:11:21 by nolecler         ###   ########.fr       */
+/*   Updated: 2025/04/18 14:55:32 by nolecler         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minishell.h"
 
-void	add_var_in_env(char *str, t_envp *envp)
-{
-	t_envp	*last;
-	t_envp	*new;
-	int		i;
-
-	i = ft_envlen(envp);
-	new = init_var(str, i);
-	if (!new)
-	{
-		clear_env(envp);
-		return ;
-	}
-	if (!envp)
-		envp = new;
-	else
-	{
-		last = ft_lastenv(envp);
-		last->next = new;
-	}
-	i++;
-}
-
-static void	update_value(t_global_data *data, char *argv)
+void	update_value(t_global_data *data, char *argv)
 {
 	t_envp	*var;
 	size_t	len;
@@ -62,91 +39,57 @@ static void	update_value(t_global_data *data, char *argv)
 	}
 }
 
-// ajout
-static void    update_value_with_join(t_global_data *data, char *argv)
+static void	update_value_with_join(t_global_data *data, char *argv)
 {
-    t_envp    *var;
-    size_t    len;
-    char    *val;
-    char    *new_value;
+	t_envp	*var;
+	size_t	len;
+	char	*val;
+	char	*new_value;
 
-    val = ft_strnstr(argv, "+=", ft_strlen(argv));
-    if (!val)
-        return ;
-    len = ft_strlen(argv) - ft_strlen(val); // Longueur du nom uniquement (sans la valeur)
-    var = data->envp;
-    while (var)
-    {
-        if (ft_strncmp(argv, var->name, len) == 0 
-            && len == ft_strlen(var->name))
-        {
-            new_value = ft_strjoin(var->value, val + 2);
-            free(var->value);
-            var->value = new_value;
-            break ;
-        }
-        var = var->next;
-    }
+	val = ft_strnstr(argv, "+=", ft_strlen(argv));
+	if (!val)
+		return ;
+	len = ft_strlen(argv) - ft_strlen(val);
+	var = data->envp;
+	while (var)
+	{
+		if (ft_strncmp(argv, var->name, len) == 0
+			&& len == ft_strlen(var->name))
+		{
+			new_value = ft_strjoin(var->value, val + 2);
+			free(var->value);
+			var->value = new_value;
+			break ;
+		}
+		var = var->next;
+	}
 }
 
-// modif 
-static int    export_with_args(t_cmd *cmd, t_global_data *data)
+static int	export_with_args(t_cmd *cmd, t_global_data *data)
 {
-    int    i;
+	int	i;
 
-    i = 1; 
-    while (cmd->argv[i])
-    {
-        if (is_var_valid(cmd->argv[i]) == 1)
-        {
-            ft_putstr_fd("export: ", 2); 
-            ft_putstr_fd(cmd->argv[i], 2);
-            ft_putstr_fd(": not a valid identifier\n", 2);
-            data->status = 1;
-        }
-        else
-        {
-            if (ft_strnstr(cmd->argv[i], "+=", ft_strlen(cmd->argv[i])))
-                update_value_with_join(data, cmd->argv[i]);
-            else if (is_var_exist(cmd->argv[i], data) == 1)
-                add_var_in_env(cmd->argv[i], data->envp);
-            else if (ft_strchr(cmd->argv[i], '='))
-                update_value(data, cmd->argv[i]);
-        }
-        i++;
-    }
-    return (data->status);
+	i = 1;
+	while (cmd->argv[i])
+	{
+		if (is_var_valid(cmd->argv[i]) == 1)
+		{
+			print_message(cmd, ": not a valid identifier\n");
+			data->status = 1;
+		}
+		else
+		{
+			if (ft_strnstr(cmd->argv[i], "+=", ft_strlen(cmd->argv[i])))
+				update_value_with_join(data, cmd->argv[i]);
+			else if (is_var_exist(cmd->argv[i], data) == 1)
+				add_var_in_env(cmd->argv[i], data->envp);
+			else if (ft_strchr(cmd->argv[i], '='))
+				update_value(data, cmd->argv[i]);
+		}
+		i++;
+	}
+	return (data->status);
 }
-
-
-
-
-
-// static int	export_with_args(t_cmd *cmd, t_global_data *data)
-// {
-// 	int	i;
-
-// 	i = 1;
-// 	while (cmd->argv[i])
-// 	{
-// 		if (is_var_valid(cmd->argv[i]) == 1)
-// 		{
-// 			ft_putstr_fd("export: ", 2);
-// 			ft_putstr_fd(cmd->argv[i], 2);
-// 			ft_putstr_fd(": not a valid identifier\n", 2);
-// 			data->status = 1;
-// 		}
-// 		else
-// 		{
-// 			if (is_var_exist(cmd->argv[i], data) == 1)
-// 				add_var_in_env(cmd->argv[i], data->envp);
-// 			else if (ft_strchr(cmd->argv[i], '='))
-// 				update_value(data, cmd->argv[i]);
-// 		}
-// 		i++;
-// 	}
-// 	return (data->status);
-// }
 
 static void	print_sorted_env(t_envp *var)
 {
@@ -180,7 +123,7 @@ int	exec_export(t_cmd *cmd, t_global_data *data)
 		clear_env_array(temp);
 		if (!data->envp)
 		{
-			printf("Error: envp is empty or NULL\n");
+			ft_putstr_fd("Error: envp is empty or NULL\n", 2);
 			data->status = 1;
 			return (data->status);
 		}
